@@ -1,0 +1,30 @@
+***
+Imperative commands
+*******************
+
+***
+Deployment
+**********
+
+kubectl create deployment my-deployment --image=nginx
+
+***
+Get sample Yaml file
+*********************
+
+kubectl create deployment my-deployment --image=nginx --dry-run -o yaml
+
+kubectl create deployment my-deployment --image=nginx --dry-run=client -o yaml > 7.1-redirect-imperative-to-file-deploymment.yml(dry-run depricated, use dry-run=client)
+
+***
+record flag for recording the command used
+*******************************************
+
+kubectl scale deployment my-deployment --replicas 5 --record
+
+kubectl describe deployment my-deployment (we can view the command used for changing the object)
+
+***
+You can use kubernetes documentation during the exam
+****************************************************
+kubernetes.io

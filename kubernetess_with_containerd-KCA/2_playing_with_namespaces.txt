@@ -1,0 +1,24 @@
+** get all name spaces *
+************************
+kubectl get namespace
+
+kubectl get namespaces
+
+* view pods ****
+*****************
+kubectl get pods --namespace kube-system
+
+kubectl get pods -n kube-system
+
+* create new namespace ****
+***************************
+
+kubectl create namespace learning
+
+##### by default the objects are saved in default namespace if no namespace is specified
+
+
+* get pods across all namespaces
+*********************************
+
+kubectl get pods --all-namespaces

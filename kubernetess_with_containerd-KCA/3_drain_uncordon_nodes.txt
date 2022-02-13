@@ -1,0 +1,105 @@
+** create independant pod ****
+*******************************
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: my-pod
+spec: 
+  containers: 
+    - 
+      image: "nginx:1.14.2"
+      name: nginx
+      ports: 
+        - 
+          containerPort: 80
+  restartPolicy: OnFailure
+EOF
+
+
+***** if you have a yml file saved***** run below command
+
+kubectl apply -f ymlfilename.yml
+
+**********************************************************
+create deployment
+**********************************************************
+
+cat << EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  labels: 
+    app: my-deployment
+  name: my-deployment
+spec: 
+  replicas: 3
+  selector: 
+    matchLabels: 
+      app: my-deployment
+  template: 
+    metadata: 
+      labels: 
+        app: my-deployment
+    spec: 
+      containers: 
+        - 
+          image: "nginx:1.14.2"
+          name: nginx
+          ports: 
+            - 
+              containerPort: 80
+EOF
+
+
+*** 
+drain the node which has deployment and independant pod running
+***************************************************************
+
+kubectl drain node_name(kubectl drain 18e487c0ae1c.mylabserver.com)
+
+		cloud_user@6264c7e2371c:~$ kubectl drain 18e487c0ae1c.mylabserver.com
+		node/18e487c0ae1c.mylabserver.com cordoned
+		error: unable to drain node "18e487c0ae1c.mylabserver.com", aborting command...
+
+		There are pending nodes to be drained:
+		 18e487c0ae1c.mylabserver.com
+		cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/calico-node-w5mpp, kube-system/kube-proxy-nbvdt
+		cannot delete Pods not managed by ReplicationController, ReplicaSet, Job, DaemonSet or StatefulSet (use --force to override): default/my-pod
+		
+kubectl drain node_name --ignore-daemonsets		
+
+		cloud_user@6264c7e2371c:~$ kubectl drain 18e487c0ae1c.mylabserver.com --ignore-daemonsets
+		node/18e487c0ae1c.mylabserver.com already cordoned
+		error: unable to drain node "18e487c0ae1c.mylabserver.com", aborting command...
+
+		There are pending nodes to be drained:
+		 18e487c0ae1c.mylabserver.com
+		error: cannot delete Pods not managed by ReplicationController, ReplicaSet, Job, DaemonSet or StatefulSet (use --force to override): default/my-pod
+
+***
+forcing the drain - it removes pods not managed by replica controller- removes all manually created pods
+********************************************************************************************************
+
+kubectl drain node_name --ignore-daemonsets --force
+
+***
+check if all managed nodes are shifted to available node
+********************************************************
+
+kubectl get pods -o wide
+
+
+***
+once the node is updated, we can use uncordon to make it available for scheduling
+*********************************************************************************
+
+kubectl uncordon node_name
+
+
+##### Note: when all the worker nodes are drained, master will not create pods in it. It will just wait for any of the worker nodes to be available and schedule it
+
+***
+delete deployment
+*******************
+kubectl delete deployment my-deployment

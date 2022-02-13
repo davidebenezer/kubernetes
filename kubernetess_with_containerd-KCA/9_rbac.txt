@@ -1,0 +1,59 @@
+***
+check if a user named dev has access to get pods
+**************************************
+
+kubectl get pods -n beebox-mobile --kubeconfig dev-k8s-config
+
+***
+create role pod-reader
+**********************
+
+cloud_user@k8s-control:~$ vi role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: beebox-mobile
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "watch", "list"]
+
+kubectl apply -f role.yaml
+
+***
+create role binding
+********************
+
+cloud_user@k8s-control:~$ vi role-binding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+# This role binding allows "jane" to read pods in the "default" namespace.
+# You need to already have a Role named "pod-reader" in that namespace.
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: beebox-mobile
+subjects:
+# You can specify more than one "subject"
+- kind: User
+  name: dev # "name" is case sensitive
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  # "roleRef" specifies the binding to a Role / ClusterRole
+  kind: Role #this must be Role or ClusterRole
+  name: pod-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
+
+kubectl apply -f role-binding.yaml
+
+***
+test if dev user is able to use get pods
+****************************************
+
+kubectl get pods -n beebox-mobile --kubeconfig dev-k8s-config   (access pods)
+
+kubectl logs beebox-auth -n beebox-mobile -f --kubeconfig dev-k8s-config (access logs)
+
+(delete not allowed)
+cloud_user@k8s-control:~$ kubectl delete pods beebox-auth  -n beebox-mobile --kubeconfig dev-k8s-config
+Error from server (Forbidden): pods "beebox-auth" is forbidden: User "dev" cannot delete resource "pods" in API group "" in the namespace "beebox-mobile"

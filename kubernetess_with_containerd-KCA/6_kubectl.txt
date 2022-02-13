@@ -1,0 +1,93 @@
+https://kubernetes.io/docs/reference/kubectl/overview/
+***
+create a pod:
+*************
+use: kubectl -f 6.1-my-pod.yml
+
+file or 
+
+cat << EOF | kubectl create -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+  - name: busybox
+    image: radial/busyboxplus.curl
+	command: ['sh', '-c', 'while true; do sleep 3600; done'] 
+EOF
+
+***
+kubectl get
+************
+
+kubectl get <object type> <object name> -o <output> --sort-by <JSONPath> --selector <selector>
+
+	-o   : set output format. output format in form of YAML/JSON
+	--sort-by  : sort output using json expression
+	--selector : Filter results by label
+	
+
+kubectl get pod/pods (gets all pods in default namespace with details)
+kubectl get pods podname (get details on specific pod)
+kubectl get pods -o wide (get additional details on pods)
+kubectl get pods -o json (get additional details on pods in json format)
+kubectl get pods -o yaml (get additional details on pods in yaml format)
+	
+kubectl get pods -o wide --sort-by .spec.nodeName (sorts pods based on spec.nodename from the pods yaml/json)
+
+kubectl get pods -n kube-system --selector k8s-app=calico-node (filers node based on param provided)
+
+***
+kubectl describe provide detailed info of object
+************************************************
+
+kubectl describe <object type> <object name>
+
+kubectl describe pod (provide detailed description of pods)
+kubectl describe pods my-pod(provide detailed description of specific pod, including container initialization steps)
+
+***
+kubectl create creates objects. If it already exists, it will error output
+**************************************************************************
+
+kubectl create -f <file name>
+
+kubectl create -f 6.1-my-pod.yml (errors if resource already exists)
+
+***
+kubectl apply creates/modify objects. If it already exists, it will update
+**************************************************************************
+
+kubectl apply -f <file name>
+kubectl create -f 6.1-my-pod.yml (updates resources if already exists)
+
+
+
+***
+kubect exec - used to run commands inside containers. containers should have necessary software to run the commands
+*******************************************************************************************************************
+
+kubectl exec <pod name> -c <container name> -- command
+
+kubectl exec my-pod -c busybox -- echo "Hello, World"(-c is needed if pod have multiple containers)
+kubectl exec my-pod -- echo "Hello, World" (-c not needed if pod has a single container)
+
+***
+kubectl delete - delete objects
+*******************************
+
+kubectl delete <object type> <object name>
+
+kubectl delete pod my-pod (deletes pod)
+
+***
+Get details on api resources
+*****************************
+
+kubectl api-resources (provides complete list of supported resources)
+
+kubectl explain <resource> (e.x kubectl explain pods provide detailed description of resource)
+
+

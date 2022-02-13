@@ -1,0 +1,21 @@
+***
+Getting Metrics Server up and running
+*************************************
+kubectl apply -f https://raw.githubusercontent.com/linuxacademy/content-cka-resources/master/metrics-server-components.yaml
+
+***
+Query the API
+*************
+kubectl get --raw /apis/metrics.k8s.io/
+
+kubectl top pod (get resource usage for pods)
+
+kubectl top pods -n kube-system (give resources used by kube-system namespace pods)
+
+kubectl top pod --sort-by cpu (sorts by cpu usage)
+
+kubectl top pod -n kube-system --sort-by cpu (sorts by cpu usage for a specific namespace)
+
+kubectl top pod --selector app=metrics-test (give metrics filtered by selector)
+
+kubectl top node ( gives resource usage of each node)

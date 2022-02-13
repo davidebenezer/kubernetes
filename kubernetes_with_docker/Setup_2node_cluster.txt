@@ -1,0 +1,82 @@
+Install docker on Master and both nodes
+=======================================
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+
+sudo apt-get update
+
+sudo apt-get install -y docker-ce=18.06.1~ce~3-0~ubuntu
+
+sudo apt-mark hold docker-ce
+
+sudo docker version
+
+
+Install Kubeadm, kubelet and kubectl on master and both nodes
+=============================================================
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+cat << EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+sudo apt-get update
+
+sudo apt-get install -y kubelet=1.15.7-00 kubeadm=1.15.7-00 kubectl=1.15.7-00
+
+sudo apt-mark hold kubelet kubeadm kubectl
+
+kubeadm version
+
+
+Run this only on master
+=======================
+
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+mkdir -p $HOME/.kube
+
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl version
+
+
+Run below command on child nodes ########################
+================================
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 172.31.47.140:6443 --token r5oho4.17712w4hrl44h00x \
+    --discovery-token-ca-cert-hash sha256:d3261c438ba6469e32e44aa62b42f82d86e15718eb4846cf9d0f155afa6e785c
+
+
+Networking - run on master and 2 child nodes
+==========================================================
+
+echo "net.bridge.bridge-nf-call-iptables=1" | sudo tee -a /etc/sysctl.conf
+
+sudo sysctl -p
+
+Install flannel only on master node
+===================================
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+
+master Verify that nodes are ready
+===========================
+
+kubectl get nodes
+
+master check if flannel system pods are running(3 should show up for each node including master)
+================================================================================================
+
+kubectl get pods -n kube-system
+
