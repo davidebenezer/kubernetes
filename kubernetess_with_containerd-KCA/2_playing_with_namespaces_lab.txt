@@ -1,0 +1,32 @@
+Task
+****
+* An Existing Kubernetes Cluster
+* Create New Namespace called Dev
+* List the current namespaces
+* Locate a pod with the name Quark and save the name of the pod's namespace to a file
+
+Solution:
+*********
+
+Create Namepace
+***************
+
+kubectl create namespace dev
+
+List Current Namespaces
+***********************
+
+kubectl get namespaces > /home/cloud_user/namespaces.txt
+
+verify
+******
+
+cat namespaces.txt
+
+Find Quark Pod and its namespace and save to file
+*************************************************
+
+kubectl get pods --all-namespaces
+
+vi /home/cloud_user/quark-namespace.txt and save the found out namespace for quark
+

@@ -1,30 +1,46 @@
+Declarative
+***********
+
+Define objects using data structures such as YAML or JSON
+
 ***
 Imperative commands
 *******************
 
+Define Objects using kubectl commands and flags. Some people find imperative commands faster. Experiment and see what works for you
+
+
+	***
+	Deployment
+	**********
+
+	kubectl create deployment my-deployment --image=nginx
+
+	***
+	Quick sample Yaml file
+	**********************
+
+	Use the --dry-run flag to run an imperative command without creating an object. Combine it with -o yaml to quickly obtain a sample YAML file 
+		you can manipulate.
+
+	kubectl create deployment my-deployment --image=nginx --dry-run -o yaml
+
+	kubectl create deployment my-deployment --image=nginx --dry-run=client -o yaml > 7.1-redirect-imperative-to-file-deploymment.yml(dry-run depricated, use dry-run=client)
+
+	***
+	Record a Command
+	****************
+
+	Use the --record flag to record the command that was used to make a change.
+
+	$kubectl scale deployment my-deployment --replicas 5 --record
+
+	$kubectl describe deployment my-deployment (we can view the command used for changing the object)
+
 ***
-Deployment
-**********
+Use the Docs
+************
+You can often find YAML examples in the Kubernetes documentation. You are allowed to use this documentation during the exam.
+	Feel free to copy and paste example YAML and/or commands from the docs!
 
-kubectl create deployment my-deployment --image=nginx
-
-***
-Get sample Yaml file
-*********************
-
-kubectl create deployment my-deployment --image=nginx --dry-run -o yaml
-
-kubectl create deployment my-deployment --image=nginx --dry-run=client -o yaml > 7.1-redirect-imperative-to-file-deploymment.yml(dry-run depricated, use dry-run=client)
-
-***
-record flag for recording the command used
-*******************************************
-
-kubectl scale deployment my-deployment --replicas 5 --record
-
-kubectl describe deployment my-deployment (we can view the command used for changing the object)
-
-***
-You can use kubernetes documentation during the exam
-****************************************************
 kubernetes.io

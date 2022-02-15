@@ -1,0 +1,135 @@
+Q&A Chapter 2
+===============
+
+1. Which Flag can you use with kubeadm to supply a custom configuration file?  --config
+2. what does 8 in k8s specify? 8 letters between k and s in kubernetes
+3. which kubernetes component manages containers on an individual node? kubelet
+4. what is the primary feature of kubernetes? Container Orchestration
+5. what is a namespace? A mechanism for isolating groups of resources within a single cluster.
+6. Which flag allows you to specify which Namespace you want to interact with when using kubectl? -n or --namespace
+7. What is Kubernetes control pane? A collection of components that manage the cluster globally
+8. What does kubeadm do? Simplifies the process of building kubernetes clusters
+
+
+Notes:
+======
+
+Kompas  - Helps in migrating docker compose to kubernetes objects
+Helm - Use chart to maintain kubernetes templates to easily create complex architecture
+Kustomize - Used for maintaining kubernetes templates similar to Helm
+
+High Availability -- We need to have more than one Controle Plane(e.g Node1, Node2) In that case we need to 
+	* communicate to kube-api-server through load balancer
+	* Kubelet uses the load balancer to communicate with kube api server
+	
+Design patters for etcd in multi control plance set up
+Design Pattern 1:
+	stacked etcd - (kube-api as well run on each control pane node)etcd run in same node as control pane. 
+					each control plane will have its own etcd instance
+Design Pattern 2:
+	external etcd - etcd will run outside of control pane nodes. Multiple etcd will be running.
+	
+What is draining?
+	when performing maintenancy, you may sometimes need to remove a kubernetes node from sevice
+	To do this, you can drain the node. Containers running on the node will be gracefully terminated (and potentially rescheduled on another node).
+	
+	Ignoring Daemon Sets:
+		When draining a node, you may need to ignore DaemonSets(pods that are tied to each node). If you have DaemontSet pods running on the
+			node, you will likely need to use the --ignore-daemonsets flag.
+			
+	$ kubectl drain <node name> --ignore daemonsets
+	
+	(drain might error out if we dont ignore daemonsets)
+	
+Uncordoning a Node1
+	If the node remains part of the cluster, you can allow pods to run on the node again when maintenance is complete using 
+		kubectl uncordon command.
+	
+	$ kubectl uncordon <node name>
+	
+etcd
+****
+
+Why backup etcd?
+	etcd is the backend data storage solution for your kubernetes cluster. As such, all your kubernetes objects, application, and configurations
+		are stored in etcd.
+		Therefore, you will likely want to be able to back up your cluster's data by backing up etcd.
+		You can backup etcd using etcd command line tool etcdctl.
+		
+		
+		Backup etcd
+		***********
+		$ ETCDCTL_API=3 etcdctl --endpoints $ENDPOINT snapshot save <file name>
+		
+		Restore etcd
+		************
+		$ ETCDCTL_API=3 etcdctl snapshot restore <file name>
+		
+		Restore creates a temporary logical cluster in order to re populate the data from saved backup file.
+		
+Q&A Chapter 2
+=============
+
+1. which tool provides a command-line interface for kubernetes? kubectl
+2. which software does kubernetes use to store data about the stare of the cluster? Etcd
+3. Which tool(s) allow you to create Kubernete clusters? MiniKube, Kubeadm (Helm allows you to template k8s object, it does not help build clusters)
+4. Which command is used to safely evict your pods from a node before maintenance on the node? kubectl drain
+5. What command can you use to allow Pods to be scheduled on a previously-drained node after Node maintenance is complete? kubectl uncordon
+6. Which tool can help you perform a Kubernetes upgrade? kubeadm
+7. which of the following options are for a highly-available Etcd architecture? External Etcd, Stacked Etcd
+8. Which command allows you to upgrade control plane components? Kubectl upgrade apply
+9. Which command-line tool allows you to interact with Etcd and perform backups? etcdctl
+10. How can you make Kubernetes highly available? Have multiple control plane nodes
+
+Notes:
+======
+
+what id kubectl? 
+	kubectl is a command line tool that allows you to interact with kubernetes. kubectl uses the Kubernetes API to communicate with the cluster
+		and carry out your commands.
+		" You can use kubectl to deploy applications, inspect and manage cluster resources, and view logs".
+		
+kubectl get
+***********
+	Use kubectl get to list objects in the Kuubernetes cluster.
+	
+	$ kubectl get <object type> <object name> -o <output> --sort-by <JSONPath> --selector <selector>
+	
+kubectl describe
+****************
+	You can get detailed information about Kubernetes objects using kubect describe
+	
+	$ kubectl describe <object type> <object name>
+
+kubectl create
+**************
+	Use kubectl create to create objects
+	
+	Supply a YAML file with -f to create an object from a YAML descriptor stored in the file.
+	
+	If you attempt to create an object that already exists, an error will occur.
+	
+	$ kubectl create -f <file name>
+	
+kubectl apply
+*************
+	kubectl apply is similar to kubectl create. However, if you use kubectl apply on an object that already exists, it will modify the
+		existing object, if possible.
+		
+	$ kubectl apply -f <file name>
+	
+Kubectl delete
+**************
+	kubectl delete <object type> <object name>
+	
+kubectl exec
+************
+	kubectl exec can be used to run commands inside containers. Keep in mind, in order for a command to succeed, the necessary software
+		must exist within the container to run it.
+	For pods with  multiple containers, specify the container name with -c. Not needed for pod with only one container
+		
+	$ kubectl exec <pod name> -c <container  name> -- <command>
+	
+kubectl get (provides additional info)
+
+kubectl api-resources (gives complete list of resources)

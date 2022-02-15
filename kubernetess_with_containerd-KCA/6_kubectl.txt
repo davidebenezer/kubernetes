@@ -61,7 +61,7 @@ kubectl apply creates/modify objects. If it already exists, it will update
 **************************************************************************
 
 kubectl apply -f <file name>
-kubectl create -f 6.1-my-pod.yml (updates resources if already exists)
+kubectl apply -f 6.1-my-pod.yml (updates resources if already exists)
 
 
 

@@ -1,3 +1,22 @@
+* Create 3 medium with Ubuntu Bionic 18.4
+
+Step 1: Do on all nodes
+========================
+		Do on Master
+			sudo hostnamectl set-hostname k8s-master
+		Do on worker1
+			sudo hostnamectl set-hostname k8s-worker1
+		Do on worker2
+			sudo hostnamectl set-hostname k8s-worker2
+		
+Step 2: since host name is changed. update the /etc/hosts in all servers
+========================================================================
+
+172.31.42.90 k8s-master
+172.31.47.197 k8s-worker1
+172.31.47.243 k8s-worker2
+		
+
 All 3 nodes including master
 ****************************
 

@@ -19,7 +19,7 @@ EOF
 
 ***** if you have a yml file saved***** run below command
 
-kubectl apply -f ymlfilename.yml
+kubectl apply -f filename.yml
 
 **********************************************************
 create deployment
@@ -51,6 +51,11 @@ spec:
               containerPort: 80
 EOF
 
+To check which node pods are running once
+*****************************************
+
+kubectl get pods -o wide
+
 
 *** 
 drain the node which has deployment and independant pod running
@@ -80,6 +85,13 @@ kubectl drain node_name --ignore-daemonsets
 ***
 forcing the drain - it removes pods not managed by replica controller- removes all manually created pods
 ********************************************************************************************************
+
+kubectl drain node_name (cannot delete pods not  managed by replication controller)
+
+	drain does not delete pods not maintained by replication controller
+	daemonset pods cannot be deleted
+
+--force will delete pods even if not managed by replication controller
 
 kubectl drain node_name --ignore-daemonsets --force
 
