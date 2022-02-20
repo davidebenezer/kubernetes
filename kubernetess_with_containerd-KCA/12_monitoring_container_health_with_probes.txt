@@ -1,0 +1,97 @@
+Control Pane
+
+Liveness Probe:
+***************
+
+	Exec:
+	*****
+	Below is a exect type liveness probe. Runs a command and if the command succeed then the container is considered healthy
+	initialDelay: Waits for given seconds when container starts up
+	periodSeconds: How frequently liveness probe needs to run
+
+vi liveness-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do sleep 3600; done']
+    livenessProbe:
+      exec:
+        command: ["echo", "Hello, World!"]
+      initialDelaySeconds: 5
+      periodSeconds: 5
+	  
+$ kubectl apply -f liveness-pod.yml
+
+	liveness-http
+	*************
+	
+vi liveness-pod-http.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-pod-http
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.19.1
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+
+kubectl apply -f liveness-pod-http.yml
+
+
+Startup Probe:
+**************
+failureThreshold waits for specified time for application startup
+
+vi startup-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: startup-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.19.1
+    startupProbe:
+      httpGet:
+        path: /
+        port: 80
+      failureThreshold: 30
+      periodSeconds: 10
+      
+kubectl apply -f startup-pod.yml
+      
+Readiness Probe:
+****************
+
+vi readiness-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: readiness-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.19.1
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      
+kubectl readiness-pod.yml

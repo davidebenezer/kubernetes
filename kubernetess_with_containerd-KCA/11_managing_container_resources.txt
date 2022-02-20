@@ -1,0 +1,51 @@
+Resource Request
+================
+Requesting more cpu's than available
+************************************
+
+vi big-request-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: big-request-pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do sleep 3600; done']
+    resources:
+      requests:
+        cpu: "10000m"
+        memory: "128Mi"
+		
+kubectl apply -f big-request-pod.yml
+
+# kubectl waits for a node which has the memory sufficient to support the pod.  It will remain in pending indefinitely till 
+	a node has that much cpu
+	
+Pod with Reasonable Resource Request and resource limit
+*******************************************************
+
+vi resource-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resource-pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do sleep 3600; done']
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+		
+kubectl apply -f resource-pod.yml
+		
+Docker throttles if the cpu is more. It terminates if memory used is more by the container

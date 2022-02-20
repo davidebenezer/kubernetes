@@ -1,10 +1,4 @@
 ***
-check if a user named dev has access to get pods
-**************************************
-
-kubectl get pods -n beebox-mobile --kubeconfig dev-k8s-config
-
-***
 create role pod-reader
 **********************
 
@@ -12,7 +6,7 @@ cloud_user@k8s-control:~$ vi role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: beebox-mobile
+  namespace: default
   name: pod-reader
 rules:
 - apiGroups: [""] # "" indicates the core API group
@@ -32,7 +26,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: read-pods
-  namespace: beebox-mobile
+  namespace: default
 subjects:
 # You can specify more than one "subject"
 - kind: User
@@ -47,7 +41,7 @@ roleRef:
 kubectl apply -f role-binding.yaml
 
 ***
-test if dev user is able to use get pods
+lab test if dev user is able to use get pods
 ****************************************
 
 kubectl get pods -n beebox-mobile --kubeconfig dev-k8s-config   (access pods)

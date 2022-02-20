@@ -1,0 +1,75 @@
+***
+Getting Metrics Server up and running. This installs all kubernetes components needed for metrics server. This is a customized version 
+	Out of the box one needs some modifications to work
+**************************************************************************************************************************************
+
+#kubectl apply -f https://raw.githubusercontent.com/linuxacademy/content-cka-resources/master/metrics-server-components.yaml
+kubectl apply -f ./9_metrics-server-components.yml
+
+***
+Query the API
+*************
+Query API server and see if its responsive
+******************************************
+kubectl get --raw /apis/metrics.k8s.io/
+
+Create a pod
+************
+
+vi test-metrics-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-metrics-pod
+  labels:
+    app: metrics-test
+spec:
+  containers:
+  - name: busybox
+    image: radial/busyboxplus:curl
+    command: ['sh', '-c', 'while true; do sleep 3600; done']
+	
+
+kubectl top pod (get resource usage for pods)
+
+kubectl top pods -n kube-system (give resources used by kube-system namespace pods)
+
+kubectl top pod --sort-by cpu (sorts by cpu usage)
+
+kubectl top pod -n kube-system --sort-by cpu (sorts by cpu usage for a specific namespace)
+
+kubectl top pod --selector app=metrics-test (give metrics filtered by selector)
+
+kubectl top node ( gives resource usage of each node)
+
+
+lab:
+====
+Introduction
+Kubernetes metrics allow you to gain insight into a wide variety of data about your Kubernetes applications. You can use these metrics to gain insight into how your compute resources are being used. In this lab, you will have the opportunity to hone your skills by investigating existing pods running in a Kubernetes cluster to determine which ones are using the most CPU.
+
+Solution
+Log in to the lab server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Install Kubernetes Metrics Server
+
+#kubectl apply -f https://raw.githubusercontent.com/ACloudGuru-Resources/content-cka-resources/master/metrics-server-components.yaml
+kubectl apply -f ./9_metrics-server-components.yml (copy yml from above)
+
+Verify Metrics Server is responsive:
+
+kubectl get --raw /apis/metrics.k8s.io/
+
+It may take a few minutes for Metrics Server to become responsive to requests.
+
+Locate the CPU-Using Pod and Write Its Name to a File
+In the beebox-mobile namespace, determine which pod with the label app=auth is using the most CPU:
+
+kubectl top pod -n beebox-mobile --sort-by cpu --selector app=auth
+If you get an error message saying metrics are not available, wait a few minutes and then run the command again.
+
+Write the name of the pod to a file:
+
+echo auth-proc > /home/cloud_user/cpu-pod-name.txt
