@@ -1,0 +1,186 @@
+create deployment
+*****************
+
+$ vi deployment-svc-example.yml 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-svc-example
+spec:
+  replicas: 3
+  selector: 
+    matchLabels:
+      app: svc-example
+  template:
+    metadata:
+      labels:
+        app: svc-example
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.19.1
+        ports:
+        - containerPort: 80
+
+$ kubectl apply -f deployment-svc-example.yml
+
+create clusterip service
+************************
+# ClusterIP is the default
+
+port: service is listening on
+targetPort: port that will be routed to by the services(container port)
+
+vi svc-clusterip.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-clusterip
+spec:
+  type: ClusterIP
+  selector: 
+    app: svc-example
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      
+kubectl apply -f svc-clusterip.yml
+
+Get Endpoints for the service
+*****************************
+
+$ kubectl get endpoints svc-clusterip
+
+It should be matching with label in service
+$ kubectl get pods -l=app=svc-example -o wide
+
+Create a pod to test connecting to service
+******************************************
+$ vi pod-svc-test.yml
+
+apiVersion: v1 
+kind: Pod
+metadata:
+  name: pod-svc-test
+spec:
+  containers:
+  - name: busybox
+    image: radial/busyboxplus:curl
+    command: ['sh', '-c', 'while true; do sleep 10; done']
+
+$ kubectl apply -f pod-svc-test.yml
+
+#check if its created
+
+$ kubectl get pods
+
+# Test the service from busybox pod
+
+$ kubectl exec pod-svc-test -- curl svc-clusterip:80
+
+
+NodePort Service
+****************
+
+Node Port service will be listening to Control Plane node as well as any worker node.
+
+vi svc-nodeport.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-nodeport
+spec:
+  type: NodePort
+  selector: 
+    app: svc-example
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30080
+
+$ kubectl apply -f svc-nodeport.yml
+
+#To check quickly if service is working
+
+$ curl localhost:30080
+
+Hit it from browser
+Use Public IP of control plane node or worker node with port 30080
+
+http://54.176.232.200:30080/
+
+
+##########################################################################################3
+lab
+***
+
+Exposing Kubernetes Pods Using Services
+Introduction
+Kubernetes Services are a great way to combine Kubernetes networking with the dynamic and often automated nature of Kubernetes applications. In this lab, you will use Services to expose existing Kubernetes Pods. This will allow you to practice your skills with Kubernetes Services.
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Expose the Pods from the User-db Deployment as an Internal Service
+Examine the properties of the user-db deployment by using kubectl get deployment user-db -o yaml.
+
+In the deployment properties, find the spec and look for the Pod template, paying particular attention to the labels, especially the label app: user-db.
+
+Take note of which port(s) are exposed.
+
+Start creating a Service that will expose its Pods to other components within the cluster by using vi user-db-svc.yml.
+
+Define the Service by using:
+
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: user-db-svc 
+spec: 
+  type: ClusterIP 
+  selector: 
+    app: user-db 
+  ports: 
+  - protocol: TCP 
+    port: 80 
+    targetPort: 80
+Save and exit the file by hitting the ESC key and using :wq.
+
+Finish creating the Service by using kubectl create -f user-db-svc.yml.
+
+Test the Service to make sure it works by using kubectl exec busybox -- curl user-db-svc. It may not work right away, so you may need to wait a few minutes and try again, but you should be able to see the Nginx welcome page.
+
+Expose the Pods from the Web-frontend Deployment as an External Service
+Now, examine the properties of the frontend deployment by using kubectl get deployment web-frontend -o yaml.
+
+Check the labels applied to the Pod template. You should see the label app=web-frontend.
+
+Take note of which port(s) are exposed.
+
+Start creating a Service that will expose its Pods on port 30080 of each cluster node by using vi web-frontend-svc.yml.
+
+Define the Service by using:
+
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: web-frontend-svc 
+spec: 
+  type: NodePort 
+  selector: 
+    app: web-frontend 
+  ports: 
+  - protocol: TCP 
+    port: 80 
+    targetPort: 80 
+    nodePort: 30080
+Save and exit the file by hitting the ESC key and using :wq.
+Finish creating the Service by using kubectl create -f web-frontend-svc.yml.
+
+Test the Service from outside the cluster (such as in a browser) by navigating to http://<PUBLIC_IP_ADDRESS>:30080

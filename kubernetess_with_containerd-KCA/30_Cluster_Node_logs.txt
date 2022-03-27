@@ -1,0 +1,6 @@
+Control Plane Node:
+*******************
+
+$ sudo journalctl -u kubelet
+$ kubectl get pods -n kube-system
+$ kubectl logs -n kube-system kube-apiserver-k8s-control

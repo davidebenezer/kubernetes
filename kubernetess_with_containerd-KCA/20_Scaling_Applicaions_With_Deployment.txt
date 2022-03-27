@@ -1,0 +1,54 @@
+Scaling Deployment
+******************
+
+# change the replicas number in existing deployment yml
+
+$ vi my-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 3
+  selector: 
+    matchLabels:
+      app: my-deployment
+  template:
+    metadata:
+      labels:
+        app: my-deployment
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.19.1
+        ports:
+        - containerPort: 80
+
+$ kubectl apply -f my-deployment.yml
+
+$ kubectl get deployments
+
+
+Get all pods associated with label in deployment
+************************************************
+$ kubectl get pods --selector=app=my-deployment
+
+or
+
+$ kubectl get pods -l=app=my-deployment
+
+
+Edit Deployment
+***************
+
+change replicas in spec not the status.
+
+$ kubectl edit deployment my-deployment
+
+save and exit, it will take effect immediately
+
+Scale using Scale command
+*************************
+
+$ kubectl scale deployment.v1.apps/my-deployment --replicas=3

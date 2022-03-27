@@ -1,0 +1,81 @@
+$ vi troubleshooting-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: troubleshooting-pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do sleep 5; done']
+
+$ kubectl apply -f troubleshooting-pod.yml
+$ kubectl get pods
+$ kubectl exec troubleshooting-pod -c busybox -- ls
+
+start interactive shell
+$ kubectl exec troubleshooting-pod -c busybox --stdin --tty -- /bin/sh
+
+Checking container logs
+***********************
+vi logs-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logs-pod
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo Here is my output; sleep 5; done']
+
+$ kubectl apply -f logs-pod.yml
+$ kubectl logs logs-pod -c busybox
+
+lab
+###############################
+
+Troubleshooting a Broken Kubernetes Application
+Introduction
+Kubernetes administrators need to be able to fix issues with applications running in a cluster. This lab will allow you to test your skills when it comes to fixing broken Kubernetes applications. You will be presented with a cluster running a broken application and asked to identify and correct the problem.
+
+Solution
+Log in to the server by using the credentials provided: ssh cloud_user@<PUBLIC_IP_ADDRESS>.
+
+Identify What is Wrong with the Application
+Examine the web-consumer deployment, which resides in the web namespace, and its Pods by using kubectl get deployment -n web web-consumer.
+
+Get more information by using kubectl describe deployment -n web web-consumer, including container specifications and labels that the Pods are using.
+
+Look more closely at the Pods by using kubectl get pods -n web to see if both Pods are up and running.
+
+Get more information about the Pods by using kubectl describe pod -n web <POD_NAME>, and evaluate any warning messages that may come up.
+
+Look at the logs associated with the container busybox by using kubectl logs -n web <POD_NAME> -c busybox.
+
+Determine what may be going wrong by reading the output from the container logs.
+
+Take a closer look at the pod itself by using kubectl get pod -n web <POD_NAME> -o yaml to get the data in the yaml format.
+
+Determine which command is causing the errors (in this case, the while true; do curl auth-db; sleep 5; done command).
+
+Fix the Problem
+Take a closer look at the service by using kubectl get svc -n web auth-db.
+
+Locate where the service is by using kubectl get namespaces and finding the one other non-default namespace called data.
+
+Check kubectl get svc -n data and find the auth-db service in this namespace, rather than the web namespace.
+
+Start resolving the issue by using kubectl edit deployment -n web web-consumer.
+
+In the spec section, scroll down to find the pod template and locate the while true; do curl auth-db; sleep 5; done command.
+
+Change the command to while true; do curl auth-db.data.svc.cluster.local; sleep 5; done to give the fully qualified domain name of that service. This will allow the web-consumer deployment's Pods to communicate with the service successfully.
+
+Save the file and exit by pressing the ESC key and using :wq.
+
+Check kubectl get pods -n web to ensure that the old pods have terminated and the new pods are running successfully.
+
+Check the log of one of the new pods by using kubectl logs -n web <POD-NAME> -c busybox. This time the pod should be able to communicate successfully with the service.

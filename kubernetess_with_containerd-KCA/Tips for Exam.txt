@@ -1,0 +1,23 @@
+Create deployments
+******************
+
+$ kubectl run my-nginx --image=nginx(will be deprecated)
+  kubectl run --generator=run-pod/v1
+  
+Create Services
+***************
+
+$ kubectl expose deployments my-nginx --type NodePort --port 80
+
+Create Secrets
+**************
+
+$ cat secret
+password=supersecret
+
+$ kubectl create secret generic my-secret --from-env-file=secret
+
+Kubectl Explain
+***************
+
+$ kubectl explain persistentvolumes.spec.hostPath

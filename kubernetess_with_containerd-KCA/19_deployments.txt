@@ -1,0 +1,40 @@
+Deployments
+***********
+
+$ vi my-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 3
+  selector: 
+    matchLabels:
+      app: my-deployment
+  template:
+    metadata:
+      labels:
+        app: my-deployment
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.19.1
+        ports:
+        - containerPort: 80
+
+kubectl apply -f my-deployment.yml
+
+Get Deployment
+**************
+
+kubectl get deployments
+
+Get Pods
+********
+
+kubectl get pods
+
+Kubectl delete pod <pod name>
+
+# if we manually deploy a pod managed by replica, it wil spin up another pod to maintain the desired number of replicas

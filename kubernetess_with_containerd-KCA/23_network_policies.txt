@@ -1,0 +1,124 @@
+create new namespace for testing network policies
+*************************************************
+$ kubectl create namespace np-test
+
+  Add a Label
+  ***********
+  $ kubectl label namespace np-test team=np-test
+  
+  Create a webserver Pod
+  **********************
+$ vi np-nginx.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: np-nginx
+  namespace: np-test
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+
+$ kubectl create -f np-nginx.yml
+
+  Create a busybox pod
+  ********************
+
+$ vi np-busybox.yml
+
+apiVersion: v1 
+kind: Pod
+metadata:
+  name: np-busybox
+  namespace: np-test
+  labels:
+    app: client
+spec:
+  containers:
+  - name: busybox
+    image: radial/busyboxplus:curl
+    command: ['sh', '-c', 'while true; do sleep 5; done']
+    
+$ kubectl create -f np-busybox.yml
+
+  get pods from np-test namespace
+  *******************************
+
+$ kubectl get pods -n np-test -o wide
+
+  Tesc connectivity to nginx from busybox
+  ***************************************
+
+$ NGINX_IP=192.168.126.15
+
+$ kubectl exec -n np-test np-busybox exec -- curl $NGINX_IP
+
+#able to reach nginx and response is returned
+
+
+  Create a network policy so that nothing is allowed
+  **************************************************
+  Nothing is allowed if no Ingress, Egress
+  
+vi my-networkpolicy.yml
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: my-networkpolicy
+  namespace: np-test
+spec:
+  podSelector:
+    matchLabels:
+      app: nginx
+  policyTypes:
+  - Ingress
+  - Egress
+  
+$ kubectl apply -f my-networkpolicy.yml
+
+  Try to connect to nginx from busybox
+  ************************************
+    Network policy should prevet communication
+    
+$ kubectl exec -n np-test np-busybox exec -- curl $NGINX_IP
+
+
+  Add a rule to allow communication once again by using namespace selector
+  ************************************************************************
+  
+$ kubectl edit networkpolicy -n np-test my-networkpolicy
+
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: "2022-02-20T23:21:10Z"
+  generation: 1
+  name: my-networkpolicy
+  namespace: np-test
+  resourceVersion: "260993"
+  uid: 23274488-a52d-405a-9b4e-691370b2cb3b
+spec:
+  podSelector:
+    matchLabels:
+      app: nginx
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          team: np-test
+    ports:
+    - protocol: TCP
+      port: 80
+
+
