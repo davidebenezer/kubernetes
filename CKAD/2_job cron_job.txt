@@ -1,0 +1,60 @@
+Job
+***
+
+$ vi my-job.yml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: my-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: print
+        image: busybox:stable
+        command: ["echo", "This is a test!"]
+      restartPolicy: Never
+  backoffLimit: 4
+  activeDeadlineSeconds: 10
+  
+# backoffLimit - No of attempts it retries when failed
+# activeDeadlineSeconds: 10 - terminates if it take longer than 10 seconds.
+
+$ kubectl apply -f my-job.yml
+$ kubectl get jobs
+$ kubectl get pods
+$ kubectl logs my-job--* # get the logs from associated pod for the job
+
+Cron Job
+********
+
+vi my-cronjob.yml
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: my-cronjob
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: print
+            image: busybox:stable
+            command: ["echo", "This is a test!"]
+          restartPolicy: Never
+      backoffLimit: 4
+      activeDeadlineSeconds: 1
+
+$ kubectl apply -f my-cronjob.yml
+$ kubectl get cronjob
+$ kubectl get jobs
+
+Exam Tips
+* Tip1: A Job is designed to run a containerized task successfully to completion.
+* Tip2: CronJobs run Jobs periodically accoring to a schedule
+* Tip3: The restartPolicy for a Job or CronJob Pod must be OnFailure or Never.
+* Tip4: Use activeDeadlineSeconds in the Job spec to terminate the job if it runs too long.

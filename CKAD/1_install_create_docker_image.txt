@@ -1,0 +1,52 @@
+#Create Docker Group
+$ sudo groupadd docker
+
+https://docs.docker.com/engine/install/ubuntu/
+
+$ sudo apt-get update
+
+$  sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+    sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    
+$ echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+$ sudo apt-get update
+$ sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+$ sudo docker version
+
+$ sudo usermod -aG docker cloud_user
+
+Create Own Image:
+*****************
+
+$ mkdir my-website
+$ cd my-website
+$ vi index.html
+  Hello World!
+
+$ vi Dockerfile
+
+FROM nginx:stable
+COPY index.html /usr/share//nginx/html/
+
+$ docker build -t my-website:0.0.1 .
+
+$ docker run --rm --name my-website -d -p 8080:80 my-website:0.0.1
+$ curl localhost:8080
+$ docker stop my-website
+$ docker save -o /home/cloud_user/my-website_0.0.1.tar my-website:0.0.1
+
+Exam Tips:
+
+Tip1: Images are files that inclde all of the software needed to run a container.
+Tip2: A Dockerfile defines the contents of an image
+Tip3: The docker build command builds an image using a Dockerfile

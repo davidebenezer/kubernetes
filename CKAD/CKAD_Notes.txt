@@ -1,0 +1,233 @@
+Running Jobs and Cron Jobs
+**************************
+What is a Job?
+  Jobs are designed to run a containerized task successfully to completion.
+  
+What is a CrojJob?
+  CrojJob run Jobs periodically according to a schedule.
+  
+Building Multi Container Pods
+*****************************
+What is a multi container pod?
+  Multi contaner pods are Pods that include multiple containers that work together
+  
+  Sidecar
+  *******
+  * A Sidecar container performs a task to assist the main container.
+  * Example: The main container serves files from a shared volume. The side car periodically updates those files.
+  
+  Ambassador
+  **********
+  * An ambassador container proxies network traffic to and/or from the main container.
+  * Example: The main controller reaches out to Service on port 80, but the port changes to 81. An ambassador 
+      container proxies traffic from 80 to 81, making it configurable.
+      
+  Adapter
+  *******
+  * An adapter container transforms the main container's output in some way.
+  * Example: The main container outputs log data to the container log in a non-standard format without timestamps. The
+      adapter transforms the data into a standard format by adding timestamps.
+      
+When to use Multi Container Pods?
+  Only use multi-container Pods when the containers need to be tightly coupled, sharing resources such as network
+    and storage volumes.
+    
+Init Containers
+***************
+what is an init container?
+  An init container is a container that runs to complete a task before a Pod's main container starts updates
+
+Why use init containers?
+  Separate Image:
+    Init containers can use a separate image to perform start-up tasks using software that the main image does not 
+      include or need.
+      
+  Delay Startup
+    Init containers can be used to delay start up of the main container until certain preconditions are met.
+    
+  Security:
+    Init containers perform sensitive start-up steps, like consuming secrets, in isolation from the main container.
+    
+Exploring Volumes
+*****************
+
+What is a volume?
+
+  A volume provides external storage for containers outside the file system.
+  
+  Volumes
+    * Defined in the Pod spec.
+    * Defines the details of where and how the data is stored
+  
+  
+  VolumeMounts
+    * Defined int he container spec
+    * Attaches the volume to a specific container
+    * Defins the path where the volume data will appear at runtime.
+    
+  Volume Types
+    The volume type determines where and how data storage is handled. 
+    
+    1. hostPath
+        Data is stored in a specific location directly on the host file system, on the kubernetes node where the Pod
+        is running
+        
+    2. emptyDir
+        Data is stored in an automatically managed location on the host file system. Data is deleted if Pod is deleted.
+      
+    3. persistentVolumeClaim
+        Data is stored using a PersistentVolume.
+        
+Using Persistent Volumes
+************************
+  A PersistentVolume allows you to abstract volume storage details away from Pods and treat storage
+    like a consumable resource.
+    
+  PersistentVolume
+    * Defines an abstract storage resource ready to be sonsume by Pods.
+    * Defines details about the type and amount os storage provided.
+    
+  PersistentVolumeClaim
+    * Defines a request for storage, including details on the type of storage needed.
+    * Automatically binds to an available PersistentVolume that meets the provided requirements
+    * Mounted in a Pod like any volume.
+    * PersistentVolumeClaims(PVC) automatically bind to a PersistentVolume (PV) that meets their
+      criteria 
+      
+Q&A
+***
+1. You have an application that needs to write temporary cache data to disk. It does not matter if 
+    this data is lost when the container stops. What type of volume should you use? emptyDir
+
+2. You have a container image on a machine, and you need to save a copy of the image to an archive file. 
+    How can you do this with Docker? Use the docker save command.
+
+3. Which multi-container design pattern uses an additional container to proxy network traffic to 
+    and/or from the main container? Ambassador
+    
+4. Which of the following is an advantage of using an init container? 
+    Init containers are isolated from the main container.
+    
+5. What Kubernetes object can you use to execute a task repeatedly according to a schedule?
+    CronJob
+    
+6. What Kubernetes feature can you use to define an abstract storage resource that can be consumed later?
+    PersistentVolume
+    
+7. What object can you use to bind to a PersistentVolume and then mount that storage in a Pod?
+    PersistentVolumeClaim
+    
+8. You need to run some custom code before your application container starts up. 
+    What tool can you use to do this? Init container
+    
+9. In the Job spec, what field can you use to set a time limit on how long the Job can take 
+    to execute and terminate the process if it takes too long? activeDeadlineSeconds
+    
+10. Which of the following is a good reason to use multi-container Pods? 
+      To allow tightly coupled containers to share resources.
+      
+11. You have a Dockerfile. How can you create an image using the Dockerfile?
+      Use the docker build command.
+
+12. Which hostPath type mounts a whole directory but will not create the directory if it 
+    does not already exist?
+      Directory
+      
+Exam Tips
+*********
+  Images:
+  *******
+    Tip1: Images are files that include all of the software needed to run a container
+    Tip2: A Dockerfile defines the contents of an image.
+    Tip3: The docker build command build an image using a Dockerfile
+
+  Jobs and CronJobs
+  *****************
+    Tip1: A Job is designed to run a containerized task successfully to completion.
+    Tip2: CronJobs run Jobs periodically according to a schedule.
+    Tip3: The restartPoliicy for a Job or CronJob Pod must be OnFailure or Never
+    Tip4: Use activeDeadlineSeconds in the Job spec to terminate the Job if it runs too long.
+
+  Multi-Container Pods
+  ********************
+    Tip1: A sidecar container performs some task that helps the main container.
+    Tip2: An ambassador container proxies network traffic to and/or from the main container.
+    Tip3: An adapter container transforms the main container's output.
+    
+  Init Containers
+  ***************
+    Tip1: Init containers run to completion before the  main container starts up.
+    Tip2: Add init containers using the initContainers field of the PodSpec.
+    
+  Volumes
+  *******
+    Tip1: The volumes field in the Pod spec defines details about volumes used in the Pod.
+    Tip2: The volumeMounts field in the container spec mounts a volume to a specific container at a 
+    Tip3: hostPath volumes mount data from a specific location on the host(k8s node).
+    Tip4: hostPath volume types:
+          * Directory - Mounts an existing directory on the host.
+          * DirectoryOrCreate - Mounts a directory on the host, and creates if it doesn't exist.
+          * File - Mounts an existing single file on the host.
+          * FileOrCreate - Mounts a file on the host, and creates if it doesn't exist.
+    Tip5: emptyDir volumes provide temporary storage that uses the host file system, and are removed it
+          the Pod is deleted.
+          
+  Persistent Volumes
+  ******************
+    Tip1: A PersistentVolume defines a storage resource.
+    Tip2: A PersistentVolumelaim defines a request to consume a storage resource.
+    Tip3: PersistentVolumeClaims automatically bind to a PersistentVolume that meets their criteria.
+    Tip4: Mount a PersistentVolumeClaim to a container like a regulare volume.
+    
+    
+Understanding Deployments
+*************************
+What is a deployment?
+  A Deployment defines a desired state for a set of replica Pods. Kubernetes constantly works
+    to maintain that desired state by creating, deleting, and replacing those Pods. 
+  A Deployment manages multiple replica Pods using a Pod template.
+  The Pod Template is the shared configuration used by the Deployment to create new replicas
+  A Deployment's replicas field determines the number of replicas. 
+  You can change this value to scale up or down.
+
+Performing Rolling Updates
+**************************
+What is rolling update?
+  A rolling update allows you to change a Deployment's Pod template, gradually replacing replicas
+    with zero downtime.
+    
+  You can use rolling updates to deploy new code!
+  
+Deploying with Blue/Green and Canary Strategies
+***********************************************
+What is a Deployment Strategy?
+  A Deployment strategy is method of rolling out new code that is used to achieve some benefit, such as
+    increasing reliability and minimizing risk. 
+    
+  Blue Green Deployment
+  *********************
+  A blue/green deployment strategy involves using 2 identical production environments, usually called
+    blue and green
+ 
+  Canary Deployment
+  *****************
+  Just like blue/green, a canary deployment strategy uses 2 environments.
+  A portion of the user base is directed to the new code in order to expose any issues before the
+    changes are rolled out to everyone else.
+
+Installing Helm
+***************
+What is Helm?
+  Helm is a package management tool for applications that run in Kubernetes. It allows you to
+      easily install software in your cluster, alongside the necessary Kubernetes configuration.
+
+Using Helm
+**********
+Helm Charts
+***********
+  A Helm Chart is a Helm software package. It contains all of the Kubernetes resource definitions
+    needed to get the application up and running in the cluster.
+
+What is a Helm Repository?
+  A Helm Repository is a collection of available Charts. You can use it to browse and download Charts
+    before installing them in your cluster.
