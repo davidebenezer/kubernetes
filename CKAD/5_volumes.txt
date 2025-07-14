@@ -1,0 +1,73 @@
+Volume
+******
+# create /etc/hostPath in each worker node
+
+Worker1:
+********
+$ sudo mkdir etc/hostPath
+$ echo "This is worker 1!" | sudo tee /etc/hostPath/data.txt
+
+Worker2:
+********
+$ sudo mkdir etc/hostPath
+$ echo "This is worker 2!" | sudo tee /etc/hostPath/data.txt
+
+Control Plane Node:
+*******************
+$ vi hostpath-volume-test.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath-volume-test
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: busbox
+    image: busybox:stable
+    command: ['sh', '-c', 'cat /data/data.txt']
+    volumeMounts:
+    - name: host-data
+      mountPath: /data 
+  volumes:
+  - name: host-data
+    hostPath: 
+      path: /etc/hostPath
+      type: DirectoryOrCreate
+      
+# type can be File, FileOrCreate, Directory, DirectoryOrCreate
+$ kubectl apply -f hostpath-volume-test.yml
+
+empty dir volume-test
+*********************
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptydir-volume-test
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: busbox
+    image: busybox:stable
+    command: ['sh', '-c', 'echo "Writing to empty dir..." > /data/data.txt; cat /data/data.txt']
+    volumeMounts:
+    - name: empty-dir
+      mountPath: /data 
+  volumes:
+  - name: empty-dir
+    emptyDir: {}
+    
+Exam Tips
+*********
+  Tip1: The volumes field in the Pod spec defines details about volumes in the pod.
+  Tip2: The volumeMounts field in the container spec mounts a volume to a specific container
+        at a specific location.
+  Tip3: hostPath volumes mount data from a specific location on the host(k8s node).
+  Tip4: hostPath volume types:
+        * Directory - Mounts an existing directory on the host.
+        * DirectoryOrCreate - Mounts a directory on the host, and creates it if it doesnt exist.
+        * File - Mounts an existing single file on the host.
+        * FileOrCreate - Mounts a files on the host, and creates it if it doesn't exist.
+  Tip5: emptyDir volumes provide temporary storage that uses the host file system and are removed if 
+        Pod is deleted.

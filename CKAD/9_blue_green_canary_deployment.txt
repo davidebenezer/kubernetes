@@ -1,0 +1,267 @@
+Rolling Updates
+***************
+Blue Deployment
+***************
+$ kubectl create deployment nginx --image nginx 
+$ vi blue-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blue-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: bluegreen-test
+      color: blue
+  template:
+    metadata:
+      labels:
+        app: bluegreen-test
+        color: blue
+    spec:
+      containers:
+      - name: nginx
+        image: linuxacademycontent/ckad-nginx:blue
+        ports:
+        - containerPort: 80
+
+$ kubectl apply -f blue-deployment.yml
+
+
+Create service:
+***************
+$ kubectl expose deployment blue-deployment --port=80 --target-port=80 --dry-run=client -o yaml > bluegreen-test-svc.yml
+
+$ vi bluegreen-test-svc.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluegreen-test-svc
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: bluegreen-test
+    color: blue
+
+$ kubectl apply -f bluegreen-test-svc.yml
+
+Green Deployment
+****************
+
+$ kubectl create deployment green-deployment --image=linuxacademycontent/ckad-nginx:green \
+          --replicas=2 --dry-run=client --port=80 -o yaml > green-deployment.yml
+
+$ vi green-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: green-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bluegreen-test
+      color: green
+  template:
+    metadata:
+      labels:
+        app: bluegreen-test
+        color: green
+    spec:
+      containers:
+      - image: linuxacademycontent/ckad-nginx:green
+        name: nginx
+        ports:
+        - containerPort: 80
+
+$ kubectl apply -f green-deployment.yml
+$ kubectl get pods -o wide
+$ kubectl edit service bluegreen-test-svc
+
+
+# Canary Deployment
+*******************
+
+$ vi main-deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: canary-test
+      environment: main
+  template:
+    metadata:
+      labels:
+        app: canary-test
+        environment: main
+    spec:
+      containers:
+      - image: linuxacademycontent/ckad-nginx:1.0.0
+        name: nginx
+        ports:
+        - containerPort: 80
+
+Service
+*******
+
+vi canary-test-svc.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-test-svc
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: canary-test
+
+$ kubectl apply -f canary-test-svc.yml
+
+
+$ vi canary-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canary-test
+      environment: canary
+  template:
+    metadata:
+      labels:
+        app: canary-test
+        environment: canary
+    spec:
+      containers:
+      - image: linuxacademycontent/ckad-nginx:canary
+        name: nginx
+        ports:
+
+$ kubectl apply -f canary-deploymment.yml
+$ curl 10.96.118.99:80
+
+Exam Tips
+*********
+
+Tip1: You can use multiple Deployments to set up the blue/green environments in Kubernetes.
+Tip2: Use lables and selectors to direct user traffic to different Pods.
+Tip3: A simple way to set up a canary environment in kubernetes is to use a Service that selects Pods from 2 different Deployments.
+        Vary the number of replicas to direct fewer users to the canary environment.
+
+lab
+#########################
+
+Advanced Rollout with Kubernetes Deployments
+The basic features of Kubernetes can be used to implement advanced Deployment strategies such as blue/green Deployments. In this lab, you will have the opportunity to try your hand at implementing these strategies in Kubernetes.
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Perform a Rolling Update
+Check the Deployment configuration:
+
+kubectl describe deployment web-frontend -n hive
+Take note of the container's name, in this case, nginx.
+
+Perform a rolling update on the Deployment. You will include the container name you noted before:
+
+kubectl set image deployment.v1.apps/web-frontend -n hive nginx=nginx:1.16.1
+Check the status of the rollout:
+
+kubectl rollout status deployment/web-frontend -n hive
+You should be able to see the status of the rollout while it occurs.
+
+Check the Deployment's Pods in the hive Namespace:
+
+kubectl get pods -n hive
+You should see that the Deployment's Pods are now running the new image version.
+
+Perform a Blue/Green Deployment
+Make a copy of the blue Deployment manifest, changing the name so that it is for a green Deployment:
+
+cp internal-api-blue.yml internal-api-green.yml
+Edit the green Deployment manifest:
+
+vi internal-api-green.yml
+Make the following changes to the manifest:
+
+Change the Deployment's name to internal-api-green.
+Change the color value under matchLabels and under template to green.
+Change the image to linuxacademycontent/ckad-nginx:green.
+The manifest should now look like this:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: internal-api-green
+  namespace: hive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: internal-api
+      color: green
+  template:
+    metadata:
+      labels:
+        app: internal-api
+        color: green
+    spec:
+      containers:
+      - name: nginx
+        image: linuxacademycontent/ckad-nginx:green
+        ports:
+        - containerPort: 80
+Type ESC followed by :wq to save your changes.
+
+Create the green Deployment.
+
+kubectl apply -f internal-api-green.yml
+Check the green Deployment status:
+
+kubectl get deployments -n hive
+Obtain a list of Pods in the hive Namespace:
+
+
+kubectl get pods -n hive -o wide
+Copy the IP address for the Pod that is part of the green Deployment.
+
+Use the green Deployment Pod's IP address to test the Pod directly:
+
+curl <internal-api-green Pod IP address>
+You should see the response, I'm green!
+
+Edit the Service. You will be updating the Service so that it points to the green Deployment:
+
+kubectl edit svc api-svc -n hive
+Scroll down to the selector. Change the selector so that the Service directs traffic to the green Deployment's Pod:
+
+  selector:
+    app: internal-api
+    color: green
+Type ESC followed by :wq to save your changes.
+
+Get the Service's CLUSTER-IP address:
+
+kubectl get svc api-svc -n hive
+Use the IP address to test the Service. The output should come from the green Pod:
+
+curl <api-svc CLUSTER-IP address>
+You should see the response, I'm green!

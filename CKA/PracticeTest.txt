@@ -1,0 +1,626 @@
+Certified Kubernetes Administrator (CKA) Practice Exam: Part 1
+**************************************************************
+
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) exam. You will be presented with tasks to complete as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Count the Number of Nodes That Are Ready to Run Normal Workloads
+Switch to the appropriate context with kubectl:
+
+kubectl config use-context acgk8s
+Count the number of nodes ready to run a normal workload:
+
+kubectl get nodes
+Check that the worker nodes can run normal workloads:
+
+kubectl describe node  acgk8s-worker1
+Scroll to the top of the output and check the list of taints. You should see none.
+
+Repeat the steps above for acgk8s-worker2. You should see no taints on that node either.
+
+Save this number to the file /k8s/0001/count.txt:
+
+echo 2 > /k8s/0001/count.txt
+Retrieve Error Messages from a Container Log
+Obtain error messages from a container's log:
+
+kubectl logs -n backend data-handler -c proc
+Return only the error messages:
+
+kubectl logs -n backend data-handler -c proc | grep ERROR
+Save this output to the file /k8s/0002/errors.txt:
+
+kubectl logs -n backend data-handler -c proc | grep ERROR > /k8s/0002/errors.txt
+Find the pod with a label of app=auth in the web namespace that Is utilizing the most CPU.
+Locate which Pod in the web namespace with the label app=auth is using the most CPU (In some cases, other pods may show as consuming more cpu):
+
+kubectl top pod -n web --sort-by cpu --selector app=auth
+Save the name of this Pod to /k8s/0003/cpu-pod.txt:
+
+echo auth-web > /k8s/0003/cpu-pod.txt
+
+
+Certified Kubernetes Administrator (CKA) Practice Exam: Part 2
+**************************************************************
+
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) exam. You will be presented with tasks to complete as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Edit the web-frontend Deployment to Expose the HTTP Port
+Switch to the appropriate context with kubectl:
+
+kubectl config use-context acgk8s
+Edit the web-frontend deployment in the web namespace:
+
+kubectl edit deployment -n web web-frontend
+Change the Pod template to expose port 80 on our NGINX containers:
+
+spec:
+  containers:
+  - image: nginx:1.14.2
+    ports:
+    - containerPort: 80
+Press Esc and enter :wq to save and exit.
+
+Create a Service to Expose the web-frontend Deployment's Pods Externally
+Open a web-frontend service file:
+
+vi web-frontend-svc.yml
+Define the service in the YAML document:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-frontend-svc
+  namespace: web
+spec:
+  type: NodePort
+  selector:
+    app: web-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+Press Esc and enter :wq to save and exit.
+
+Create the service:
+
+kubectl create -f web-frontend-svc.yml
+Scale Up the Web Frontend Deployment
+Scale up the deployment:
+
+kubectl scale deployment web-frontend -n web --replicas=5
+Create an Ingress That Maps to the New Service
+Create a web-frontend-ingress file:
+
+vi web-frontend-ingress.yml
+Define an Ingress in the YAML document:
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-frontend-ingress
+  namespace: web
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-frontend-svc
+            port:
+              number: 80
+Press Esc and enter :wq to save and exit.
+
+Create the Ingress:
+
+kubectl create -f web-frontend-ingress.yml
+
+
+Certified Kubernetes Administrator (CKA) - Practice Exam Part 3
+***************************************************************
+
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) exam. You will be presented with tasks to complete as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Create a Service Account
+Switch to the appropriate context with kubectl:
+
+kubectl config use-context acgk8s
+Create a service account:
+
+kubectl create sa webautomation -n web
+Create a ClusterRole That Provides Read Access to Pods
+Create a pod-reader.yml file:
+
+vi pod-reader.yml
+Define the ClusterRole:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+Press Esc and enter:wq to save and exit.
+
+Creat the ClusterRole:
+
+kubectl create -f pod-reader.yml
+Bind the ClusterRole to the Service Account to Only Read Pods in the web Namespace
+Create the rb-pod-reader.yml file:
+
+vi rb-pod-reader.yml
+Define the RoleBinding:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rb-pod-reader
+  namespace: web
+subjects:
+- kind: ServiceAccount
+  name: webautomation
+roleRef:
+  kind: ClusterRole
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+Press Esc and enter:wq to save and exit.
+
+Create the RoleBinding:
+
+kubectl create -f rb-pod-reader.yml
+Verify the RoleBinding works:
+
+kubectl get pods -n web --as=system:serviceaccount:web:webautomation
+
+
+Certified Kubernetes Administrator (CKA) - Practice Exam Part 4
+***************************************************************
+
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) exam. You will be presented with tasks to complete as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Back Up the etcd Data
+From the terminal, log in to the etcd server:
+
+ssh etcd1
+Back up the etcd data:
+
+ETCDCTL_API=3 etcdctl snapshot save /home/cloud_user/etcd_backup.db \
+--endpoints=https://etcd1:2379 \
+--cacert=/home/cloud_user/etcd-certs/etcd-ca.pem \
+--cert=/home/cloud_user/etcd-certs/etcd-server.crt \
+--key=/home/cloud_user/etcd-certs/etcd-server.key
+Restore the etcd Data from the Backup
+Stop etcd:
+
+sudo systemctl stop etcd
+Delete the existing etcd data:
+
+sudo rm -rf /var/lib/etcd
+Restore etcd data from a backup:
+
+sudo ETCDCTL_API=3 etcdctl snapshot restore /home/cloud_user/etcd_backup.db \
+--initial-cluster etcd-restore=https://etcd1:2380 \
+--initial-advertise-peer-urls https://etcd1:2380 \
+--name etcd-restore \
+--data-dir /var/lib/etcd
+Set database ownership:
+
+sudo chown -R etcd:etcd /var/lib/etcd
+Start etcd:
+
+sudo systemctl start etcd
+Verify the system is working:
+
+ETCDCTL_API=3 etcdctl get cluster.name \
+--endpoints=https://etcd1:2379 \
+--cacert=/home/cloud_user/etcd-certs/etcd-ca.pem \
+--cert=/home/cloud_user/etcd-certs/etcd-server.crt \
+--key=/home/cloud_user/etcd-certs/etcd-server.key
+
+
+CKA Practice Exam - Part 5
+***********************************************************************
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) exam. You will be presented with tasks to complete as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Upgrade All Kubernetes Components on the Control Plane Node
+Switch to the appropriate context with kubectl:
+
+kubectl config use-context acgk8s
+Upgrade kubeadm:
+
+sudo apt-get update && \
+sudo apt-get install -y --allow-change-held-packages kubeadm=1.22.2-00
+Drain the control plane node:
+
+kubectl drain acgk8s-control --ignore-daemonsets
+Plan the upgrade:
+
+sudo kubeadm upgrade plan v1.22.2
+Apply the upgrade:
+
+sudo kubeadm upgrade apply v1.22.2
+Upgrade kubelet and kubectl:
+
+sudo apt-get update && \
+sudo apt-get install -y --allow-change-held-packages kubelet=1.22.2-00 kubectl=1.22.2-00
+Reload:
+
+sudo systemctl daemon-reload
+Restart kubelet:
+
+sudo systemctl restart kubelet
+Uncordon the control plane node:
+
+kubectl uncordon acgk8s-control
+Upgrade All Kubernetes Components on the Worker Node
+Drain the worker1 node:
+
+kubectl drain acgk8s-worker1 --ignore-daemonsets --force
+SSH into the node:
+
+ssh acgk8s-worker1
+Install a new version of kubeadm:
+
+sudo apt-get update && \
+sudo apt-get install -y --allow-change-held-packages kubeadm=1.22.2-00
+Upgrade the node:
+
+sudo kubeadm upgrade node
+Upgrade kubelet and kubectl:
+
+sudo apt-get update && \
+sudo apt-get install -y --allow-change-held-packages kubelet=1.22.2-00 kubectl=1.22.2-00
+Reload:
+
+sudo systemctl daemon-reload
+Restart kubelet:
+
+sudo systemctl restart kubelet
+Type exit to exit the node.
+
+Uncordon the node:
+
+kubectl uncordon acgk8s-worker1
+Repeat the process above for acgk8s-worker2 to upgrade the other worker node.
+
+apt-mark unhold kubeadm && \
+apt-get update && apt-get install -y kubeadm=1.22.2 && \
+apt-mark hold kubeadm
+
+
+
+Certified Kubernetes Administrator (CKA): Practice Exam: Part 6
+***************************************************************
+
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) Exam. You will be presented with tasks to complete, as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Drain the Worker1 Node
+Switch to the acgk8s context:
+kubectl config use-context acgk8s
+Attempt to drain the worker1 node:
+kubectl drain acgk8s-worker1
+Does the node drain successfully?
+Override the errors and drain the node:
+kubectl drain acgk8s-worker1 --delete-local-data --ignore-daemonsets --force
+Check the status of the exam objectives:
+./verify.sh
+Create a Pod That Will Only Be Scheduled on Nodes with a Specific Label
+Add the disk=fast label to the worker2 node:
+kubectl label nodes acgk8s-worker2 disk=fast
+Create a YAML file named fast-nginx.yml:
+vim fast-nginx.yml
+In the file, paste the following:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fast-nginx
+  namespace: dev
+spec:
+  nodeSelector:
+    disk: fast
+  containers:
+  - name: nginx
+    image: nginx
+Save the file:
+ESC
+:wq
+Create the fast-nginx pod:
+kubectl create -f fast-nginx.yml
+Check the status of the pod:
+kubectl get pod fast-nginx -n dev -o wide
+Check the status of the exam objectives:
+./verify.sh
+
+
+Certified Kubernetes Administrator (CKA): Practice Exam: Part 7
+***************************************************************
+
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) Exam. You will be presented with tasks to complete, as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Note: When copying and pasting code into Vim from the lab guide, first enter :set paste (and then i to enter insert mode) to avoid adding unnecessary spaces and hashes. To save and quit the file, press Escape followed by :wq. To exit the file without saving, press Escape followed by :q!.
+
+Create a PersistentVolume
+Switch to the acgk8s context:
+kubectl config use-context acgk8s
+Create a YAML file named localdisk.yml:
+vim localdisk.yml
+In the file, paste the following:
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: localdisk
+provisioner: kubernetes.io/no-provisioner
+allowVolumeExpansion: true
+Save the file:
+ESC
+:wq
+Create a storage class using the YAML file:
+kubectl create -f localdisk.yml
+Create a YAML file named host-storage-pv.yml:
+vim host-storage-pv.yml
+In the file, paste the following:
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: host-storage-pv
+spec:
+  storageClassName: localdisk
+  persistentVolumeReclaimPolicy: Recycle
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /etc/data
+Save the file:
+ESC
+:wq
+Create the PersistentVolume:
+kubectl create -f host-storage-pv.yml
+Check the status of the volume:
+kubectl get pv host-storage-pv
+Check the status of the exam objectives:
+./verify.sh
+Create a Pod That Uses the PersistentVolume for Storage
+Create a YAML file named host-storage-pvc.yml:
+vim host-storage-pvc.yml
+In the file, paste the following:
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: host-storage-pvc
+  namespace: auth
+spec:
+  storageClassName: localdisk
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+Save the file:
+ESC
+:wq
+Create the PersistentVolumeClaim * in the same namespace as the pod:
+kubectl create -f host-storage-pvc.yml
+Check the status of the PersistentVolumeClaim:
+kubectl get pv
+Verify that the claim is bound to the volume:
+kubectl get pvc -n auth
+Create a YAML file named pv-pod.yml:
+vim pv-pod.yml
+In the file, paste the following:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pv-pod
+  namespace: auth
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo success > /output/output.log; sleep 5; done']
+    volumeMounts:
+    - name: pv-storage
+      mountPath: /output
+  volumes:
+  - name: pv-storage
+    persistentVolumeClaim:
+      claimName: host-storage-pvc
+Save the file:
+ESC
+:wq
+Create the pod:
+kubectl create -f pv-pod.yml
+Check the status of the exam objectives:
+./verify.sh
+Expand the PersistentVolumeClaim
+Edit host-storage-pvc:
+kubectl edit pvc host-storage-pvc -n auth
+Under spec, change the storage value to 200Mi.
+Save the file:
+ESC
+:wq
+Check the status of the exam objectives:
+./verify.sh
+
+
+Certified Kubernetes Administrator (CKA): Practice Exam: Part 8
+***************************************************************
+
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) Exam. You will be presented with tasks to complete, as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Create a Networkpolicy That Denies All Access to the Maintenance Pod
+Switch to the acgk8s context:
+kubectl config use-context acgk8s
+Check the foo namespace:
+kubectl get pods -n foo
+Check the maintenance pod's labels:
+kubectl describe pod maintenance -n foo
+Create a new YAML file named np-maintenance.yml:
+vim np-maintenance.yml
+In the file, paste the following:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-maintenance
+  namespace: foo
+spec:
+  podSelector:
+    matchLabels:
+      app: maintenance
+  policyTypes:
+  - Ingress
+  - Egress
+Save the file:
+ESC
+:wq
+Create the NetworkPolicy:
+kubectl create -f np-maintenance.yml
+Check the status of the exam objectives:
+./verify.sh
+Create a Networkpolicy That Allows All Pods in the users-backend Namespace to Communicate with Each Other Only on a Specific Port
+Label the users-backend namespace:
+kubectl label namespace users-backend app=users-backend
+Create a YAML file named np-users-backend-80.yml:
+vim np-users-backend-80.yml
+In the file, paste the following:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np-users-backend-80
+  namespace: users-backend
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: users-backend
+    ports:
+    - protocol: TCP
+      port: 80
+Save the file:
+ESC
+:wq
+Create the NetworkPolicy:
+kubectl create -f np-users-backend-80.yml
+Check the status of the exam objectives:
+./verify.sh
+
+
+Certified Kubernetes Administrator (CKA): Practice Exam: Part 9
+***************************************************************
+Introduction
+This lab provides practice scenarios to help prepare you for the Certified Kubernetes Administrator (CKA) Exam. You will be presented with tasks to complete, as well as server(s) and/or an existing Kubernetes cluster to complete them in. You will need to use your knowledge of Kubernetes, to successfully complete the provided tasks, much like you would on the real CKA exam. Good luck!
+
+Solution
+Log in to the server using the credentials provided:
+
+ssh cloud_user@<PUBLIC_IP_ADDRESS>
+Create a Multi-Container Pod
+Switch to the acgk8s context:
+kubectl config use-context acgk8s
+Create a YAML file named multi.yml:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi
+  namespace: baz
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+  - name: redis
+    image: redis
+Save the file:
+ESC
+:wq
+Create the multi-container pod:
+kubectl create -f multi.yml
+Check the status of the pod:
+kubectl get pods -n baz
+Check the status of the exam objectives:
+./verify.sh
+Create a Pod Which Uses a Sidecar to Expose the Main Container's Log File to Stdout
+Create a YAML file named logging-sidecar.yml:
+vim logging-sidecar.yml
+In the file, paste the following:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logging-sidecar
+  namespace: baz
+spec:
+  containers:
+  - name: busybox1
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo Logging data > /output/output.log; sleep 5; done']
+    volumeMounts:
+    - name: sharedvol
+      mountPath: /output
+  - name: sidecar
+    image: busybox
+    command: ['sh', '-c', 'tail -f /input/output.log']
+    volumeMounts:
+    - name: sharedvol
+      mountPath: /input
+  volumes:
+  - name: sharedvol
+    emptyDir: {}
+Save the file:
+ESC
+:wq
+Create the logging-sidecar pod:
+kubectl create -f logging-sidecar.yml
+Check the status of the pod:
+kubectl get pods -n baz
+Check the logging-sidecar logs:
+kubectl logs logging-sidecar -n baz -c sidecar
+Check the status of the exam objectives:
+./verify.sh
